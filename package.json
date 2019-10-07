@@ -1,0 +1,14 @@
+{
+  "name": "solanaconv",
+  "version": "1.0.0",
+  "description": "convolutional filtering in solana",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Siddharth Singh",
+  "license": "ISC",
+  "dependencies": {
+    "@solana/web3.js": "^0.19.13"
+  }
+}

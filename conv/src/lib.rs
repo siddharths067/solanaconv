@@ -1,0 +1,77 @@
+//! @brief Example Rust-based BPF program that prints out the parameters passed to it
+
+#![allow(unreachable_code)]
+
+extern crate solana_sdk;
+use solana_sdk::{
+    account_info::AccountInfo, entrypoint, entrypoint::SUCCESS, info, log::*, pubkey::Pubkey,
+};
+
+#[derive(Debug, PartialEq)]
+struct SStruct {
+    x: u64,
+    y: u64,
+    z: u64,
+}
+
+#[inline(never)]
+fn return_sstruct() -> SStruct {
+    SStruct { x: 1, y: 2, z: 3 }
+}
+
+entrypoint!(process_instruction);
+fn process_instruction(program_id: &Pubkey, accounts: &mut [AccountInfo], data: &[u8]) -> u32 {
+    info!("Program identifier:");
+    program_id.log();
+
+    // Log the provided account keys and instruction input data.  In the case of
+    // the no-op program, no account keys or input data are expected but real
+    // programs will have specific requirements so they can do their work.
+    info!("Account keys and instruction input data:");
+    sol_log_params(accounts, data);
+
+    {
+        // Test - use std methods, unwrap
+
+        // valid bytes, in a stack-allocated array
+        let sparkle_heart = [240, 159, 146, 150];
+        let result_str = std::str::from_utf8(&sparkle_heart).unwrap();
+        assert_eq!(4, result_str.len());
+        assert_eq!("💖", result_str);
+        info!(result_str);
+    }
+
+    {
+        // Test - struct return
+        let s = return_sstruct();
+        info!("Struct Returned");
+        let firstNumber = deserializeInt32(&[data[0], data[1], data[2], data[3]]);
+        assert_eq!(3, firstNumber);
+        assert_eq!(9, deserializeInt32(&[data[4], data[5], data[6], data[7]]));
+        assert_eq!(27, deserializeInt32(&[data[8], data[9], data[10], data[11]]));
+        info!("Number returned");
+
+    }
+
+    SUCCESS
+}
+
+fn deserializeInt32(data: &[u8;4]) -> u32{
+    let mut a: u32 = 0;
+    for i in 0..3 {
+        let x: u32 = (data[i] << 2*i).into();
+        a = a + x;
+    }
+    return a;
+}
+
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_return_sstruct() {
+        assert_eq!(SStruct { x: 1, y: 2, z: 3 }, return_sstruct());
+    }
+}

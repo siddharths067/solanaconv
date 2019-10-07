@@ -1,0 +1,22 @@
+[package]
+name = "conv"
+version = "0.1.0"
+authors = ["Siddharth Singh <siddharths067@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+solana-sdk = { git = "https://github.com/solana-labs/solana", default-features = false }
+
+
+[features]
+program = ["solana-sdk/program"]
+default = ["program"]
+
+[workspace]
+members = []
+
+[lib]
+name = "conv"
+crate-type = ["cdylib"]
