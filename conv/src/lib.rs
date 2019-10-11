@@ -30,33 +30,16 @@ fn process_instruction(program_id: &Pubkey, accounts: &mut [AccountInfo], data: 
     info!("Account keys and instruction input data:");
     sol_log_params(accounts, data);
 
-    {
-        // Test - use std methods, unwrap
-
-        // valid bytes, in a stack-allocated array
-        let sparkle_heart = [240, 159, 146, 150];
-        let result_str = std::str::from_utf8(&sparkle_heart).unwrap();
-        assert_eq!(4, result_str.len());
-        assert_eq!("💖", result_str);
-        info!(result_str);
-    }
-
-    {
-        // Test - struct return
-        let s = return_sstruct();
-        info!("Struct Returned");
-        let firstNumber = deserializeInt32(&[data[0], data[1], data[2], data[3]]);
-        assert_eq!(3, firstNumber);
-        assert_eq!(9, deserializeInt32(&[data[4], data[5], data[6], data[7]]));
-        assert_eq!(27, deserializeInt32(&[data[8], data[9], data[10], data[11]]));
-        info!("Number returned");
-
-    }
+    info!("Taking input the size of Filter");
+    let (cx, cy): (u32, u32) = (deserializeInt32(&data[0..3]), deserializeInt32(&data[4..7]));
+    assert_eq!(cx, 2);
+    assert_eq!(cy, 2);
+    info!("Size successfully taken");
 
     SUCCESS
 }
 
-fn deserializeInt32(data: &[u8;4]) -> u32{
+fn deserializeInt32(data: &[u8]) -> u32{
     let mut a: u32 = 0;
     for i in 0..3 {
         let x: u32 = (data[i] << 2*i).into();
