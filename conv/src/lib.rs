@@ -35,7 +35,11 @@ fn process_instruction(program_id: &Pubkey, accounts: &mut [AccountInfo], data: 
     assert_eq!(cx, 2);
     assert_eq!(cy, 2);
     info!("Size successfully taken");
-
+    let offset: usize = (4*2+cx*cy) as usize;
+    let (x, y): (u32, u32) = (deserializeInt32(&data[offset..(offset+3)]), deserializeInt32(&data[(offset+4)..(offset+7)]));
+    assert_eq!(x, 3);
+    assert_eq!(y, 3);
+    info!("Filter Successfully Taken");
     SUCCESS
 }
 
