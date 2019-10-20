@@ -20,7 +20,7 @@ fn return_sstruct() -> SStruct {
 }
 
 entrypoint!(process_instruction);
-fn process_instruction(program_id: &Pubkey, accounts: &mut [AccountInfo], data: &[u8]) -> u32 {
+fn process_instruction(program_id: &Pubkey, accounts: &mut [AccountInfo], data: &mut [u8]) -> u32 {
     info!("Program identifier:");
     program_id.log();
 
@@ -30,23 +30,41 @@ fn process_instruction(program_id: &Pubkey, accounts: &mut [AccountInfo], data: 
     info!("Account keys and instruction input data:");
     sol_log_params(accounts, data);
 
-    info!("Taking input the size of Filter");
-    let (cx, cy): (u32, u32) = (deserializeInt32(&data[0..3]), deserializeInt32(&data[4..7]));
-    assert_eq!(cx, 2);
-    assert_eq!(cy, 2);
-    info!("Size successfully taken");
-    let offset: usize = (4*2+cx*cy) as usize;
-    let (x, y): (u32, u32) = (deserializeInt32(&data[offset..(offset+3)]), deserializeInt32(&data[(offset+4)..(offset+7)]));
-    assert_eq!(x, 3);
-    assert_eq!(y, 3);
+
+    let (x, y): (u32, u32) = (deserialize_int32(&data[0..3]), deserialize_int32(&data[4..7]));
+    let (img_start, img_end): (usize, usize) = (8 as usize, (8 + x*y*3 - 1) as usize);
+    let (cx, cy): (u32, u32) = (deserialize_int32(&data[img_end..((img_end+3) as usize)]), deserialize_int32(&data[((img_end+4) as usize)..((img_end+7) as usize)]));
+    let (fil_start, fil_end): (usize, usize) = ((img_end+8 as usize) as usize, ( img_end+8 as usize+ (cx*cy- 1)as usize) as usize);
+    let result: usize = img_start;
+
+    for i in 0..(x-cx) {
+        for j in 0..(y-cy) {
+            let (tx, ty, tz): (u32, u32, u32) = (0, 0, 0);
+            for k in 0..cx{
+                for l in 0..cy{
+                    tx += (data[(i*y*3 + j*3) as usize] as u32 * data[(k*cy+l) as usize] as u32) as u32;
+                    ty += (data[(i*y*3 + j*3 + 1) as usize] as u32 * data[(k*cy+l) as usize] as u32) as u32;
+                    tz += (data[(i*y*3 + j*3 + 2) as usize] as u32 * data[(k*cy+l) as usize] as u32) as u32;
+                }
+            }
+            data[result] = if(tx>255){255 as u8} else {if tx > 0 {tx as u8} else {0}};
+
+            data[(result + 1) as usize] = if(ty>255){255 as u8} else {if ty > 0 {ty as u8} else {0}};
+
+            data[(result + 2) as usize] = if(tz>255){255 as u8} else {if tz > 0 {tz as u8} else {0}};
+            result += 3 as usize;
+
+        }
+    }
+
     info!("Filter Successfully Taken");
     SUCCESS
 }
 
-fn deserializeInt32(data: &[u8]) -> u32{
+fn deserialize_int32(data: &[u8]) -> u32{
     let mut a: u32 = 0;
     for i in 0..3 {
-        let x: u32 = (data[i] << 2*i).into();
+        let x: u32 = (data[i] as u32)<< ((2 * i) as u32);
         a = a + x;
     }
     return a;
@@ -61,4 +79,5 @@ mod test {
     fn test_return_sstruct() {
         assert_eq!(SStruct { x: 1, y: 2, z: 3 }, return_sstruct());
     }
+
 }
